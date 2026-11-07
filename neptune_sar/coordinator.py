@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
-from .models import (
+from models import (
     AgentMode,
     AgentReport,
     Coord,
@@ -23,7 +23,7 @@ from .models import (
     TargetRecord,
     TargetStatus,
 )
-from .vision_and_grid import (
+from vision_and_grid import (
     bfs_distance_map,
     extract_doors_from_floor_plan,
     parse_floor_plan,

@@ -22,8 +22,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
-from .coordinator import Coordinator, STATUS_PRIORITY
-from .models import (
+from coordinator import Coordinator, STATUS_PRIORITY
+from models import (
     AgentMode,
     AgentReport,
     Coord,
@@ -35,7 +35,7 @@ from .models import (
     TargetStatus,
     VisibleObservation,
 )
-from .vision_and_grid import (
+from vision_and_grid import (
     bfs_distance_map,
     bfs_shortest_path,
     can_unlock_door,

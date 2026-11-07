@@ -10,10 +10,29 @@ Demonstrates:
 from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set
 
-from .agents import BaseAgent, create_sar_team
-from .coordinator import Coordinator
-from .models import Coord, GroundMarker, StepDecision
-from .vision_and_grid import extract_doors_from_floor_plan
+from agents import BaseAgent, create_sar_team
+from coordinator import Coordinator
+from models import Coord, GroundMarker, StepDecision
+from vision_and_grid import extract_doors_from_floor_plan
+
+# import maze 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from maze import *
+from maze_vis import *
+
+# init maze 
+myMaze = Maze(18)
+myMaze.gen_wounded(5)
+myMaze.seal()
+myMaze.poke(4, 4)
+myGrid = MazeGrid(schema=myMaze.maze, rows=myMaze.n, columns=myMaze.n)
+myGrid.run()
+input()
+myGrid.close()
 
 
 SAMPLE_FLOOR_PLAN: List[List[Any]] = [

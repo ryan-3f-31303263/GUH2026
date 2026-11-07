@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
-from .models import Coord, GroundMarker, MarkerType, TileType, VisibleObservation
+from models import Coord, GroundMarker, MarkerType, TileType, VisibleObservation
 
 
 def extract_doors_from_floor_plan(raw_grid: Sequence[Sequence[Any]]) -> Set[Coord]:
