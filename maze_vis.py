@@ -86,7 +86,7 @@ class MazeGrid:
                             fill="#ff00d4"
                         )
 
-                    case 'C':
+                    case 'W':
                         padding_x = square_width * 0.2
                         padding_y = square_height * 0.2
 
@@ -95,6 +95,26 @@ class MazeGrid:
                             x2 - padding_x, y2 - padding_y,
                             outline=self.line_colour,
                             fill="#76b07b"
+                        )
+                    case 'I':
+                        padding_x = square_width * 0.4
+                        padding_y = square_height * 0.4
+
+                        self.canvas.create_rectangle(
+                            x1 + padding_x, y1 + padding_y,
+                            x2 - padding_x, y2 - padding_y,
+                            outline=self.line_colour,
+                            fill="blue"
+                        )
+                    case 'O':
+                        padding_x = square_width * 0.4
+                        padding_y = square_height * 0.4
+
+                        self.canvas.create_rectangle(
+                            x1 + padding_x, y1 + padding_y,
+                            x2 - padding_x, y2 - padding_y,
+                            outline=self.line_colour,
+                            fill="red"
                         )
 
     # Run GUI
