@@ -74,7 +74,10 @@ class Coordinator:
         elif parsed_agents:
             self.entrances = list(dict.fromkeys(parsed_agents.values()))
         else:
-            self.entrances = [self._find_first_walkable()]
+            border_openings = self._find_border_entrances()
+            self.entrances = (
+                border_openings if border_openings else [self._find_first_walkable()]
+            )
 
         # Partition reachable walkable floor plan into 3 sectors for A1, A2, A3
         self.sectors: Dict[int, Set[Coord]] = partition_floor_plan_into_sectors(
@@ -111,6 +114,21 @@ class Coordinator:
         # Communication statistics
         self.sync_events_count: Dict[str, int] = {"A1": 0, "A2": 0, "A3": 0}
         self.failed_sync_attempts: Dict[str, int] = {"A1": 0, "A2": 0, "A3": 0}
+
+    def _find_border_entrances(self) -> List[Coord]:
+        """Finds all walkable ('0') openings along the outer border of the maze (from `maze.poke`)."""
+        openings: List[Coord] = []
+        for c in range(self.cols):
+            if self.rows > 0 and self.grid[0][c] == 0:
+                openings.append((0, c))
+            if self.rows > 1 and self.grid[self.rows - 1][c] == 0:
+                openings.append((self.rows - 1, c))
+        for r in range(1, self.rows - 1):
+            if self.cols > 0 and self.grid[r][0] == 0:
+                openings.append((r, 0))
+            if self.cols > 1 and self.grid[r][self.cols - 1] == 0:
+                openings.append((r, self.cols - 1))
+        return openings
 
     def _find_first_walkable(self) -> Coord:
         for r in range(self.rows):

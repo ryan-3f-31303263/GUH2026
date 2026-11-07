@@ -12,11 +12,10 @@ The floor plan is represented as a 2D grid array where each cell contains one of
 
 | Symbol | Name | Meaning & Behavior |
 | :---: | :--- | :--- |
-| **`0`** / `'0'` | **Path** | Walkable open corridor or room cell. |
+| **`0`** / `'0'` | **Path** | Walkable open corridor or room cell (including border openings created by `maze.poke()`). |
 | **`1`** / `'1'` | **Wall** | Impassable barrier. Blocks both agent movement and the centred $5 \times 5$ line-of-sight vision behind it. |
 | **`A1`, `A2`, `A3`** | **Field Agents** | The 3 autonomous rescue agents deployed into the maze. Can enter and exit the maze multiple times. |
-| **`C`** | **Coordinator / Entrance** | Stationed outside the maze at the entrance/perimeter. Signal is **always ON** when an agent is at `C` / outside the maze. |
-| **`P`** (`P1..Pn`) | **Person / Target** | Trapped survivor to be located, picked up (1 per agent trip), and escorted out of the maze to `C`. |
+| **`C` / `P`** | **Casualty / Person** | Trapped survivor (`'C'` in `maze.py` / `maze_vis.py`, or `'P'`) to be located, picked up (1 per agent trip), and escorted out of the maze to the entrance. |
 | **`D`** | **Heavy Door** | Blocks movement and line-of-sight behind it while closed. **Requires 2 agents standing adjacent to `D` simultaneously** to remove/unblock (`D` $\to$ `0`). |
 | **`I`** | **Invite Marker (Offline)** | Ground message left by an agent when signal is down. Instructs any teammate who sees `I` in its $5 \times 5$ sight to go to the designated Door `D` location to help unblock it. |
 | **`O`** | **Dead-End Marker (Offline)** | Ground message left by an agent when signal is down at the mouth of a searched cul-de-sac. Tells other agents that **the road after `O` is a dead end** so they never waste steps entering it. |

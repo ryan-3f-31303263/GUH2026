@@ -56,13 +56,17 @@ def parse_floor_plan(
                 if token in ("A1", "A2", "A3"):
                     agent_positions[token] = (r, c)
                     parsed_row.append(TileType.PATH.value)
-                elif token.startswith("P") or token.startswith("T"):
-                    tid = token if len(token) > 1 else f"P{target_counter}"
+                elif (
+                    token.startswith("P")
+                    or token.startswith("T")
+                    or token.startswith("C")
+                ):
+                    tid = token if len(token) > 1 else f"C{target_counter}"
                     target_positions[tid] = (r, c)
                     target_counter += 1
                     parsed_row.append(TileType.PATH.value)
                 else:
-                    # 'D', 'C', 'I', 'O' sit on walkable structural cells (0)
+                    # 'D', 'I', 'O' sit on walkable structural cells (0)
                     parsed_row.append(TileType.PATH.value)
             else:
                 parsed_row.append(TileType.PATH.value)
