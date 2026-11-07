@@ -73,6 +73,23 @@ class Maze:
         self.maze = new_maze 
         self.n += 2
 
+    def poke(self, top_count, bottom_count):
+        top_wall = [(0, i) for i in range(1, self.n-1)] 
+        bottom_wall = [(self.n-1, i) for i in range(1, self.n-1)]
+
+        for i in range(top_count): 
+            candidate = random.choice(top_wall) 
+            if self.maze[candidate[0]+1][candidate[1]] == "0": 
+                self.maze[candidate[0]][candidate[1]] = "0"
+                top_wall.remove(candidate) 
+
+        for i in range(bottom_count): 
+            candidate = random.choice(bottom_wall) 
+            if self.maze[candidate[0]-1][candidate[1]] == "0": 
+                self.maze[candidate[0]][candidate[1]] = "0"
+                bottom_wall.remove(candidate) 
+
+
     def gen_wounded(self, count):
         candidates = [] 
         for x in range(0, self.n): 
