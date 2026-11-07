@@ -77,6 +77,16 @@ class Maze:
         top_wall = [(0, i) for i in range(1, self.n-1)] 
         bottom_wall = [(self.n-1, i) for i in range(1, self.n-1)]
 
+        count = 0
+        while count < 3:
+            candidate = random.choice(top_wall) 
+            if self.maze[candidate[0]+1][candidate[1]] == "0": 
+                self.maze[candidate[0]][candidate[1]] = "A"+str(count+1)
+                top_wall.remove(candidate)  
+                count += 1  
+            else:
+                top_wall.remove(candidate)   
+
         for i in range(top_count): 
             candidate = random.choice(top_wall) 
             if self.maze[candidate[0]+1][candidate[1]] == "0": 
