@@ -5,6 +5,8 @@ Provides the outside Coordinator and 3 independent field agents (A1, A2, A3).
 
 from .agents import AgentA1, AgentA2, AgentA3, BaseAgent, create_sar_team
 from .coordinator import Coordinator
+from agent import RescueAgent, Link
+
 from .models import (
     AgentMode,
     AgentReport,
@@ -27,8 +29,11 @@ from .vision_and_grid import (
 )
 
 __all__ = [
+    "RescueAgent",
+    "Link",
     "Coordinator",
     "BaseAgent",
+
     "AgentA1",
     "AgentA2",
     "AgentA3",
