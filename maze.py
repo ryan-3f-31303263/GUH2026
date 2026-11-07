@@ -48,23 +48,39 @@ class Maze:
                 chosen = candidates[random.randint(0, len(candidates)-1)]
                 wall = (int((x + chosen[0])/2), int((y + chosen[1])/2))
                 maze[wall[0]][wall[1]] = '0'
+                maze[chosen[0]][chosen[1]] = '0'
                 visited.append(chosen)
-                stack.append(current_cell) 
+                stack.append(current_cell)
                 stack.append(chosen)
             else: 
                 pass
         self.maze = maze 
         return maze 
 
-
-
-
-
-
-
-
     def iter_stack_gen(self):
         pass
 
     def kruskals_gen(self):
         pass
+
+    def seal(self): 
+        new_maze = [['1' for i in range(self.n+2)] for j in range(self.n+2)] 
+
+        for i in range(0, self.n): 
+            for j in range(0, self.n):
+                new_maze[i+1][j+1] = self.maze[i][j]
+
+        self.maze = new_maze 
+        self.n += 2
+
+    def gen_wounded(self, count):
+        candidates = [] 
+        for x in range(0, self.n): 
+            for y in range(0, self.n): 
+                if self.maze[x][y] == '0': 
+                    candidates.append((x,y))
+
+        for i in range(count): 
+            candidate = random.choice(candidates)
+            self.maze[candidate[0]][candidate[1]] = 'C'
+            candidates.remove(candidate)
