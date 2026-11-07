@@ -61,21 +61,21 @@ class MazeGrid:
 
                 match self.schema[row][col][0]:
 
-                    case '0':
+                    case '0': #road
                         self.canvas.create_rectangle(
                             x1, y1, x2, y2,
                             outline=self.line_colour,
                             fill=self.bg_colour
                         )
 
-                    case '1':
+                    case '1': #wall
                         self.canvas.create_rectangle(
                             x1, y1, x2, y2,
                             outline=self.line_colour,
                             fill="#918980"
                         )
 
-                    case 'A':
+                    case 'A': #agant
                         padding_x = square_width * 0.3
                         padding_y = square_height * 0.3
 
@@ -86,7 +86,7 @@ class MazeGrid:
                             fill="#ff00d4"
                         )
 
-                    case 'W':
+                    case 'W': #wounded/target
                         padding_x = square_width * 0.2
                         padding_y = square_height * 0.2
 
@@ -96,7 +96,7 @@ class MazeGrid:
                             outline=self.line_colour,
                             fill="#76b07b"
                         )
-                    case 'I':
+                    case 'I': #come here singal tag
                         padding_x = square_width * 0.4
                         padding_y = square_height * 0.4
 
@@ -106,7 +106,7 @@ class MazeGrid:
                             outline=self.line_colour,
                             fill="blue"
                         )
-                    case 'O':
+                    case 'O': #dont come here signal tag
                         padding_x = square_width * 0.4
                         padding_y = square_height * 0.4
 
@@ -116,7 +116,7 @@ class MazeGrid:
                             outline=self.line_colour,
                             fill="red"
                         )
-                    case 'D':
+                    case 'D': #door
                         padding_x = square_width 
                         padding_y = square_height 
 
