@@ -116,6 +116,16 @@ class MazeGrid:
                             outline=self.line_colour,
                             fill="red"
                         )
+                    case 'D':
+                        padding_x = square_width 
+                        padding_y = square_height 
+
+                        self.canvas.create_rectangle(
+                            x1 + padding_x, y1 + padding_y,
+                            x2 - padding_x, y2 - padding_y,
+                            outline=self.line_colour,
+                            fill="#c2c1c0"
+                        )
 
     # Run GUI
     def run(self):
