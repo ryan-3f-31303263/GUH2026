@@ -18,11 +18,19 @@ from vision_and_grid import extract_doors_from_floor_plan
 # import maze 
 import sys
 from pathlib import Path
+import threading
+from time import sleep
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from maze import *
 from maze_vis import *
+
+# init tkinter root
+# root = tk.Tk()
+# root.title("Maze")
+# root.geometry("500x500")
+# root.resizable(True, True)
 
 # init maze 
 myMaze = Maze(18)
@@ -30,31 +38,31 @@ myMaze.gen_wounded(5)
 myMaze.seal()
 myMaze.poke(4, 4)
 myGrid = MazeGrid(schema=myMaze.maze, rows=myMaze.n, columns=myMaze.n)
-myGrid.run()
-input()
-myGrid.close()
+
+SAMPLE_FLOOR_PLAN = myMaze.maze 
+SAMPLE_TARGETS = {"P"+str(random.randint(1, 1000)): target for target in myMaze.targets}
 
 
-SAMPLE_FLOOR_PLAN: List[List[Any]] = [
-    [1, 1, 1, 1, 1, "A1", "A2", "A3", 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0,    0,    0,    1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0,    1,    0,    1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0,    1,    0,    0, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0,    0,    0,    0, 0, 1, 0, 0, 0, 1],
-    [1, 1, 1, 0, 1, 1,    1,    "D",  1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 1, 0,    0,    0,    1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0,    0,    0,    0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1,    1,    1,    1, 1, 1, 1, 1, 1, 1],
-]
+# SAMPLE_FLOOR_PLAN: List[List[Any]] = [
+#     [1, 1, 1, 1, 1, "A1", "A2", "A3", 1, 1, 1, 1, 1, 1, 1],
+#     [1, 0, 0, 0, 1, 0,    0,    0,    1, 0, 0, 0, 0, 0, 1],
+#     [1, 0, 1, 0, 1, 0,    1,    0,    1, 0, 1, 1, 1, 0, 1],
+#     [1, 0, 1, 0, 0, 0,    1,    0,    0, 0, 0, 0, 1, 0, 1],
+#     [1, 0, 1, 1, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
+#     [1, 0, 0, 0, 0, 0,    0,    0,    0, 0, 1, 0, 0, 0, 1],
+#     [1, 1, 1, 0, 1, 1,    1,    "D",  1, 0, 1, 1, 1, 0, 1],
+#     [1, 0, 0, 0, 1, 0,    0,    0,    1, 0, 0, 0, 1, 0, 1],
+#     [1, 0, 1, 0, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
+#     [1, 0, 1, 0, 0, 0,    0,    0,    0, 0, 0, 0, 0, 0, 1],
+#     [1, 1, 1, 1, 1, 1,    1,    1,    1, 1, 1, 1, 1, 1, 1],
+# ]
 
-SAMPLE_TARGETS: Dict[str, Coord] = {
-    "P1": (1, 1),    # Top-left room (Sector 1)
-    "P2": (7, 5),    # Deep central chamber behind Door 'D' at (6, 7)
-    "P3": (1, 13),   # Top-right wing (Sector 3)
-    "P4": (9, 13),   # Bottom-right deep corner
-}
+# SAMPLE_TARGETS: Dict[str, Coord] = {
+#     "P1": (1, 1),    # Top-left room (Sector 1)
+#     "P2": (7, 5),    # Deep central chamber behind Door 'D' at (6, 7)
+#     "P3": (1, 13),   # Top-right wing (Sector 3)
+#     "P4": (9, 13),   # Bottom-right deep corner
+# }
 
 
 def run_episode(
@@ -104,6 +112,7 @@ def run_episode(
             )
             step_decisions[aid] = decision
             all_positions[aid] = decision.next_pos
+            myMaze.clear_agent(aid, decision.next_pos)
 
             if decision.dropped_marker is not None:
                 markers_dropped_history.append(decision.dropped_marker)
@@ -125,6 +134,8 @@ def run_episode(
                 and decision.rescued_target_id not in rescued_targets
             ):
                 rescued_targets.append(decision.rescued_target_id)
+        myGrid.update(myMaze.maze)
+        sleep(0.25)
 
         step_history.append(step_decisions)
 
@@ -179,5 +190,8 @@ def main() -> None:
         print(f"  1-to-1 Syncs      : {res['sync_counts']}")
 
 
+
 if __name__ == "__main__":
-    main()
+    simulation_thread = threading.Thread(target=main)
+    simulation_thread.start()
+    myGrid.run()

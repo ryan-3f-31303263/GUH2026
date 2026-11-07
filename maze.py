@@ -102,6 +102,7 @@ class Maze:
 
     def gen_wounded(self, count):
         candidates = [] 
+        self.targets = []
         for x in range(0, self.n): 
             for y in range(0, self.n): 
                 if self.maze[x][y] == '0': 
@@ -111,3 +112,13 @@ class Maze:
             candidate = random.choice(candidates)
             self.maze[candidate[0]][candidate[1]] = 'C'
             candidates.remove(candidate)
+            self.targets.append(candidate)
+
+    def clear_agent(self, name, new_pos): 
+        for x in range(0, self.n): 
+            for y in range(0, self.n): 
+                if self.maze[x][y] == name: 
+                    self.maze[x][y] = "0"
+
+        self.maze[new_pos[0]][new_pos[1]] = name
+            
