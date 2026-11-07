@@ -1,20 +1,19 @@
 """
 Integration Harness & Demonstration for the Coordinator and 3 Agents (A1, A2, A3).
 
-Shows how teammates' environment / GUI calls `coordinator` and `agents['A1'|'A2'|'A3']`
-and compares performance under:
+Demonstrates:
 1. Full 1-to-1 Comms
-2. Realistic RF Range / Intermittent Comms Failure
-3. Total Interior Blackout (Comms severed everywhere inside)
+2. Sudden Signal Cutoff (Signal stops suddenly mid-mission; always ON outside the maze)
+3. Heavy Door 'D' requiring 2 agents to unblock + Offline Ground Markers ('I' & 'O')
 """
 
 from __future__ import annotations
-from typing import Any, Callable, Dict, List, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set
 
 from .agents import BaseAgent, create_sar_team
 from .coordinator import Coordinator
-from .models import Coord, StepDecision
-from .vision_and_grid import parse_floor_plan
+from .models import Coord, GroundMarker, StepDecision
+from .vision_and_grid import extract_doors_from_floor_plan
 
 
 SAMPLE_FLOOR_PLAN: List[List[Any]] = [
@@ -24,7 +23,7 @@ SAMPLE_FLOOR_PLAN: List[List[Any]] = [
     [1, 0, 1, 0, 0, 0,    1,    0,    0, 0, 0, 0, 1, 0, 1],
     [1, 0, 1, 1, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
     [1, 0, 0, 0, 0, 0,    0,    0,    0, 0, 1, 0, 0, 0, 1],
-    [1, 1, 1, 0, 1, 1,    1,    0,    1, 0, 1, 1, 1, 0, 1],
+    [1, 1, 1, 0, 1, 1,    1,    "D",  1, 0, 1, 1, 1, 0, 1],
     [1, 0, 0, 0, 1, 0,    0,    0,    1, 0, 0, 0, 1, 0, 1],
     [1, 0, 1, 0, 1, 0,    1,    1,    1, 1, 1, 0, 1, 0, 1],
     [1, 0, 1, 0, 0, 0,    0,    0,    0, 0, 0, 0, 0, 0, 1],
@@ -33,7 +32,7 @@ SAMPLE_FLOOR_PLAN: List[List[Any]] = [
 
 SAMPLE_TARGETS: Dict[str, Coord] = {
     "P1": (1, 1),    # Top-left room (Sector 1)
-    "P2": (7, 5),    # Deep central chamber (Sector 2)
+    "P2": (7, 5),    # Deep central chamber behind Door 'D' at (6, 7)
     "P3": (1, 13),   # Top-right wing (Sector 3)
     "P4": (9, 13),   # Bottom-right deep corner
 }
@@ -43,16 +42,19 @@ def run_episode(
     floor_plan: Sequence[Sequence[Any]],
     targets: Dict[str, Coord],
     comm_policy: Callable[[str, Coord, int, List[Coord]], bool],
-    max_steps: int = 200,
+    max_steps: int = 220,
     verbose: bool = False,
 ) -> Dict[str, Any]:
     """
-    Runs a full Search & Rescue simulation episode with 1 Coordinator and 3 Agents (A1, A2, A3).
-
-    `comm_policy(agent_id, pos, step, entrances) -> bool` determines whether 1-to-1
-    communication between `agent_id` and the outside Coordinator succeeds on `step`.
+    Runs a full Search & Rescue simulation episode with:
+      - 1 Coordinator (outside the maze)
+      - 3 Agents (A1, A2, A3) going in and out of the maze multiple times
+      - Heavy Doors 'D' (require 2 agents adjacent to unlock)
+      - Offline Ground Markers 'I' (invite to door 'D') and 'O' (dead end ahead)
     """
     active_targets: Dict[str, Coord] = dict(targets)
+    closed_doors: Set[Coord] = extract_doors_from_floor_plan(floor_plan)
+    ground_markers: Dict[Coord, GroundMarker] = {}
     rescued_targets: List[str] = []
 
     coordinator, agents = create_sar_team(
@@ -61,6 +63,8 @@ def run_episode(
     )
 
     step_history: List[Dict[str, StepDecision]] = []
+    markers_dropped_history: List[GroundMarker] = []
+    doors_unlocked_history: List[Coord] = []
 
     for step in range(1, max_steps + 1):
         all_positions = {aid: ag.position for aid, ag in agents.items()}
@@ -76,27 +80,34 @@ def run_episode(
                 ),
                 active_targets=active_targets,
                 all_agent_positions=all_positions,
+                closed_doors=closed_doors,
+                ground_markers=ground_markers,
             )
             step_decisions[aid] = decision
             all_positions[aid] = decision.next_pos
 
-            # Update environment target map if agent picked up or rescued a target
-            if decision.picked_up_target_id and decision.picked_up_target_id in active_targets:
+            if decision.dropped_marker is not None:
+                markers_dropped_history.append(decision.dropped_marker)
+
+            if (
+                decision.unlocked_door_pos is not None
+                and decision.unlocked_door_pos not in doors_unlocked_history
+            ):
+                doors_unlocked_history.append(decision.unlocked_door_pos)
+
+            if (
+                decision.picked_up_target_id
+                and decision.picked_up_target_id in active_targets
+            ):
                 del active_targets[decision.picked_up_target_id]
 
-            if decision.rescued_target_id and decision.rescued_target_id not in rescued_targets:
+            if (
+                decision.rescued_target_id
+                and decision.rescued_target_id not in rescued_targets
+            ):
                 rescued_targets.append(decision.rescued_target_id)
 
         step_history.append(step_decisions)
-
-        if verbose and (step <= 5 or step % 15 == 0 or len(rescued_targets) == len(targets)):
-            print(f"\n--- Step {step} | Rescued: {len(rescued_targets)}/{len(targets)} ---")
-            for aid, dec in step_decisions.items():
-                comm_str = "ONLINE" if dec.synced_with_coordinator else "OFFLINE"
-                print(
-                    f"  {aid} @ {dec.next_pos} [{dec.mode.value}] ({comm_str}) "
-                    f"carry={dec.carrying_target_id} | {dec.reasoning}"
-                )
 
         if len(rescued_targets) >= len(targets):
             break
@@ -104,13 +115,16 @@ def run_episode(
     summary = coordinator.get_summary()
     summary["actual_rescued_count"] = len(rescued_targets)
     summary["steps_taken"] = len(step_history)
+    summary["doors_unlocked"] = list(doors_unlocked_history)
+    summary["markers_dropped_count"] = len(markers_dropped_history)
+    summary["total_trips_completed"] = sum(ag.trips_completed for ag in agents.values())
     return summary
 
 
 def main() -> None:
-    print("=" * 72)
-    print("NEPTUNE NORTH CHALLENGE — 1 COORDINATOR + 3 INDEPENDENT AGENTS (A1, A2, A3)")
-    print("=" * 72)
+    print("=" * 76)
+    print("NEPTUNE NORTH CHALLENGE — COORDINATOR + 3 AGENTS + DOORS ('D') + MARKERS ('I','O')")
+    print("=" * 76)
 
     scenarios = [
         (
@@ -118,13 +132,11 @@ def main() -> None:
             lambda aid, pos, step, entrances: True,
         ),
         (
-            "2. Degraded RF Comms (Only within 4 tiles of Entrance)",
-            lambda aid, pos, step, entrances: any(
-                abs(pos[0] - e[0]) + abs(pos[1] - e[1]) <= 4 for e in entrances
-            ),
+            "2. Sudden Signal Cutoff at Step 8 (Always ON Outside at Entrance)",
+            lambda aid, pos, step, entrances: (pos in entrances) or (step < 8),
         ),
         (
-            "3. Total Interior Comms Blackout (Zero Comms Inside Facility)",
+            "3. Total Interior Blackout (Only Entrance Has Signal + Offline 'I'/'O' Markers)",
             lambda aid, pos, step, entrances: pos in entrances,
         ),
     ]
@@ -134,16 +146,18 @@ def main() -> None:
             floor_plan=SAMPLE_FLOOR_PLAN,
             targets=SAMPLE_TARGETS,
             comm_policy=policy,
-            max_steps=200,
+            max_steps=220,
             verbose=False,
         )
         print(f"\nScenario: {name}")
         print(
-            f"  Targets Rescued : {res['actual_rescued_count']} / {res['targets_goal']}"
+            f"  Targets Rescued   : {res['actual_rescued_count']} / {res['targets_goal']}"
         )
-        print(f"  Steps Taken     : {res['steps_taken']}")
-        print(f"  1-to-1 Syncs    : {res['sync_counts']}")
-        print(f"  Comms Failures  : {res['failed_syncs']}")
+        print(f"  Steps Taken       : {res['steps_taken']}")
+        print(f"  Doors 'D' Opened  : {res['doors_unlocked']}")
+        print(f"  Markers ('I'/'O') : {res['markers_dropped_count']}")
+        print(f"  Multi-Exit Trips  : {res['total_trips_completed']}")
+        print(f"  1-to-1 Syncs      : {res['sync_counts']}")
 
 
 if __name__ == "__main__":
